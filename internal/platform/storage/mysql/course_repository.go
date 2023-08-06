@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 
 	mooc "github.com/ljsea6/go-clean-architecture/internal"
 
@@ -38,7 +37,11 @@ func (r *CourseRepository) Save(ctx context.Context, course mooc.Course) error {
 }
 
 func (r *CourseRepository) All(ctx context.Context) ([]*mooc.Course, error) {
-	query, args := sqlbuilder.NewSelectBuilder().Select("id", "name", "duration").From(sqlCourseTable).Build()
+	query, args := sqlbuilder.NewSelectBuilder().
+		Select("id", "name", "duration").
+		From(sqlCourseTable).
+		Build()
+
 	var courses []*mooc.Course
 
 	rows, err := r.db.QueryContext(ctx, query, args...)
@@ -61,6 +64,6 @@ func (r *CourseRepository) All(ctx context.Context) ([]*mooc.Course, error) {
 
 		courses = append(courses, &course)
 	}
-	log.Printf("%v", courses)
+
 	return courses, nil
 }
