@@ -14,10 +14,10 @@ import (
 type Server struct {
 	engine           *gin.Engine
 	httpAddr         string
-	courseRepository mooc.ICourseRepository
+	courseRepository mooc.CourseRepository
 }
 
-func New(host string, port string, courseRepository mooc.ICourseRepository) *Server {
+func New(host string, port string, courseRepository mooc.CourseRepository) *Server {
 	srv := &Server{
 		engine:           gin.New(),
 		httpAddr:         fmt.Sprintf("%s:%s", host, port),
@@ -35,4 +35,5 @@ func (s *Server) Run() error {
 func (s *Server) registerRoutes() {
 	s.engine.GET("/health", health.CheckHandler())
 	s.engine.POST("/courses", courses.CreateHandler(s.courseRepository))
+	s.engine.GET("/courses", courses.AllHandler(s.courseRepository))
 }
