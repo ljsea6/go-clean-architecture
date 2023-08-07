@@ -1,10 +1,14 @@
 package bootstrap
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
 
+	"github.com/ljsea6/go-clean-architecture/internal/creating"
+	"github.com/ljsea6/go-clean-architecture/internal/platform/bus/inmemory"
 	"github.com/ljsea6/go-clean-architecture/internal/platform/server"
 	"github.com/ljsea6/go-clean-architecture/internal/platform/storage/mysql"
 
@@ -12,13 +16,15 @@ import (
 )
 
 const (
-	_defaultHost string = "localhost"
-	_defaultPort string = "8080"
-	dbUser       string = "codely"
-	dbPass       string = "codely"
-	dbHost       string = "localhost"
-	dbPort       string = "3306"
-	dbName       string = "codely"
+	_defaultHost    string = "localhost"
+	_defaultPort    string = "8080"
+	shutdownTimeout        = 10 * time.Second
+
+	dbUser string = "codely"
+	dbPass string = "codely"
+	dbHost string = "localhost"
+	dbPort string = "3306"
+	dbName string = "codely"
 )
 
 func Run() error {
@@ -38,8 +44,17 @@ func Run() error {
 		port = _defaultPort
 	}
 
+	var (
+		commandBus = inmemory.NewCommandBus()
+	)
+
 	courseRepository := mysql.NewCourseRepository(db)
 
-	srv := server.New(host, port, courseRepository)
-	return srv.Run()
+	creatingCourseService := creating.NewCourseService(courseRepository)
+
+	createCourseCommandHandler := creating.NewCourseCommandHandler(creatingCourseService)
+	commandBus.Register(creating.CourseCommandType, createCourseCommandHandler)
+
+	ctx, srv := server.New(context.Background(), host, port, shutdownTimeout, commandBus)
+	return srv.Run(ctx)
 }
